@@ -1,0 +1,31 @@
+
+
+
+MODULES = multicon.o \
+	device_settings.o \
+	device_mqtt.o \
+	device_utils.o \
+	device_json.o \
+	system_logger.o \
+	json.o -lm -lmosquitto
+
+
+
+run:
+	gcc -c  -o json.o -c json.c
+	gcc -c  -o system_logger.o -c system_logger.c
+	gcc -c  -o device_utils.o -c device_utils.c
+	gcc -c  -o device_settings.o -c device_settings.c
+	gcc -c  -o device_json.o -c device_json.c
+	gcc -c  -o device_mqtt.o -c device_mqtt.c 
+	gcc -c  -o multicon.o -c multicon.c 
+	gcc -o multicon $(MODULES)
+	
+	./multicon
+
+start:
+	./multicon
+
+clean:
+	rm *.o
+	rm multicon
