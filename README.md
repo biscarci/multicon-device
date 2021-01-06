@@ -69,7 +69,7 @@ The params field must be an array of string where each element is a part of the 
 Command  for publishing message on mymqtthub using mosquitto installed on ubuntu
 ```
 mosquitto_pub -h node02.myqtthub.com -i 123456 -u mcsrv -P 'mcsrv' -t topic/ -m "{\"id\": 1, \"method\": \"call\", \"token\":\"chiave-di-autenticazione\", \"params\": [ \"ls\", \"-lh\", \"/\"] }"
-mosquitto_pub -h node02.myqtthub.com -i 123456 -u mcsrv -P 'mcsrv' -t topic/ -m "{\"id\": 1, \"method\": \"call\", \"token\":\"chiave-di-autenticazione\", \"params\": [ \"uci\", \"set\", \"wireless.@wifi-iface[0].ssid='ForzaNapoli'\"] }"
+mosquitto_pub -h node02.myqtthub.com -i 123456 -u mcsrv -P 'mcsrv' -t topic/ -m "{\"id\": 1, \"method\": \"uci\", \"token\":\"chiave-di-autenticazione\", \"params\": [ \"uci\", \"set\", \"wireless.@wifi-iface[0].ssid='ForzaNapoli'\"] }"
 ```
 
 
