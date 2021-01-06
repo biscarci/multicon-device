@@ -7,9 +7,9 @@ Using a room (obtained using the device serial number), the application listens 
 ## Prerequisities
 For the Multicon application development, the Teltonika SDK packages for RUT2xx, RUT850 and RUT9xx routers. The resources used in the provided examples are:
 
-A RUT955 router
-Ubuntu 16.04 OS
-SDK version RUT955_R_00.06.00.4
+- A RUT955 router
+- Ubuntu 16.04 OS (can be used on a virtual machine)
+- SDK version RUT955_R_00.06.00.4
 
 
 ## Installation
