@@ -1,8 +1,8 @@
 # Multicon Device Application
 
 This is the Multicon application designed tu works on all devices equipped with OpenWrt OS.
-The Multicon application for devices allows you to remotely configure the device by receiving commands through the MQTT protocol.
-Using a room (obtained using the device serial number), the application listens for any commands published by the serve.
+The Multicon application allows to remotely configure the device by receiving commands through the MQTT protocol.
+
 
 ## Prerequisities
 For the Multicon application development, the Teltonika SDK packages for RUT2xx, RUT850 and RUT9xx routers. The resources used in the provided examples are:
@@ -66,6 +66,10 @@ The method field can be
 The params field must be an array of string where each element is a part of the shell command.
 
 
-
+Command  for publishing message on mymqtthub using mosquitto installed on ubuntu
+```
+mosquitto_pub -h node02.myqtthub.com -i 123456 -u mcsrv -P 'mcsrv' -t topic/ -m "{\"id\": 1, \"method\": \"call\", \"token\":\"chiave-di-autenticazione\", \"params\": [ \"ls\", \"-lh\", \"/\"] }"
+mosquitto_pub -h node02.myqtthub.com -i 123456 -u mcsrv -P 'mcsrv' -t topic/ -m "{\"id\": 1, \"method\": \"call\", \"token\":\"chiave-di-autenticazione\", \"params\": [ \"uci\", \"set\", \"wireless.@wifi-iface[0].ssid='ForzaNapoli'\"] }"
+```
 
 
