@@ -10,7 +10,7 @@
 #include "system_logger.h"
 
 
-#define VERSION "0.0.1"
+#define VERSION "0.0.4"
 
 int init_modules(void);
 void handle_user_interrupt(int);
@@ -39,7 +39,8 @@ void  handle_user_interrupt(int sig)
   signal(sig, SIG_IGN);
   printf("\n");
   system_logger(LOGGER_WARN, "MAIN", "Did you hit Ctrl-C? Do you really want to quit? [y/n] ");
-
+  signal(SIGINT, handle_user_interrupt);
+  exit(0);
   c = getchar();
   if (c == 'y' || c == 'Y')
     exit(0);

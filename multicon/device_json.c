@@ -71,66 +71,138 @@ void json_handle_message(json_value* value)
         if((strcmp(value->u.object.values[x].name, "id")==0) && (check_step == 0))
         {
             // Controllo la coerenza dell'id del comando 
-            //printf("\tobject[%d].name = %s\n", x, value->u.object.values[x].name);
-            //json_print_value(value->u.object.values[x].value, 1);
             check_step++;
         }   
         else if((strcmp(value->u.object.values[x].name, "method")==0) && (check_step == 1))
         {
             // Controllo la tipologia di comando dato
-            //printf("\tobject[%d].name = %s\n", x, value->u.object.values[x].name);
-            //json_print_value(value->u.object.values[x].value, 1);
-            if(strcmp(json_get_string(value->u.object.values[x].value), "uci-set") == 0)
+            if(strcmp(json_get_string(value->u.object.values[x].value), "uci") == 0)
             {
-                command_method = METHOD_UCI_SET;
-            }
-            else if(strcmp(json_get_string(value->u.object.values[x].value), "uci-get") == 0)
-            {
-                command_method = METHOD_UCI_GET;
+                command_method = COMMAND_METHOD_UCI;
             }
             else if(strcmp(json_get_string(value->u.object.values[x].value), "call") == 0)
             {
-                command_method = METHOD_SYS_CALL;
+                command_method = COMMAND_METHOD_CALL;
             }  
             else
             {
                 system_logger(LOGGER_ERROR,"JSON", "Unrecognized method in command params");
+                break;
             }      
             check_step++;
         }  
         else if((strcmp(value->u.object.values[x].name, "token")==0) && (check_step == 2))
         {
             // Verifico il token ricevuto dal server
-            //printf("\tobject[%d].name = %s\n", x, value->u.object.values[x].name);
-            //json_print_value(value->u.object.values[x].value, 1);
             check_step++;
         }  
         else if((strcmp(value->u.object.values[x].name, "params")==0) && (check_step == 3))
         {
             // Verifico i parametri per la creazione della stringa da eseguire come comando uci 
-            
             int i;
             int num_of_commands;
-            char* command_params = NULL;
             
+            json_value* json_params = value->u.object.values[x].value;
             
-            command_params = json_get_command_params(value->u.object.values[x].value,  &num_of_commands);
-
-            
-
-            device_settings_execute_commands(command_params, command_method);
-            
+            // Controllo se ho una lista di comandi (array di array) oppure un solo comando
+            if(json_params->type == json_array)
+            {
+                if(json_params->u.array.values[0]->type == json_array)
+                {
+                    // Se ho una lista di comandi, eseguo ciascun comando ricevuto
+                    int j;
+                    char* command_params = NULL;
+                    
+                    if(JSON_COMMAND_LIST_FUNC)
+                    {
+                        for (j = 0; j < json_params->u.array.length; j++) 
+                        {
+                            json_value* json_param_array = json_params->u.array.values[j];
+                            command_params = json_get_command_params(json_param_array,  &num_of_commands);
+                            device_settings_execute_commands(command_params, command_method);
+                            free(command_params);
+                        }
+                    }
+                    else
+                    {
+                        system_logger(LOGGER_WARN,"JSON", "Command list feature is disabled");
+                    }
+                    
+                }
+                else
+                {
+                    // Se ho un solo comando, eseguo il comando ricevuto
+                    char* command_params = NULL;
+                    command_params = json_get_command_params(json_params,  &num_of_commands);
+                    device_settings_execute_commands(command_params, command_method);
+                    free(command_params);
+                } 
+            }
+            else
+            {
+                system_logger(LOGGER_ERROR,"JSON", "Unrecognized structure for params in json");
+                break;
+            }
 
             check_step++;
         }     
         else
         {
-            system_logger(LOGGER_ERROR,"JSON", "Unspected json structure");
+            system_logger(LOGGER_ERROR,"JSON", "Unrecognized json structure");
             break;
         }
                       
     }
     return;
+}
+
+
+
+static void json_print_array(json_value* value, int depth)
+{
+    int length, x;
+    if (value == NULL) {
+        return;
+    }
+    length = value->u.array.length;
+    printf("\tarray\n");
+    for (x = 0; x < length; x++) {
+        json_print_value(value->u.array.values[x], depth);
+    }
+}
+
+
+void json_print_value(json_value* value, int depth)
+{
+    if (value == NULL) {
+        return;
+    }
+    if (value->type != json_object) {
+        print_depth_shift(depth);
+    }
+    switch (value->type) {
+        case json_none:
+            printf("\tnone\n");
+            break;
+        case json_object:
+            json_print_object(value, depth+1);
+            break;
+        case json_array:
+            json_print_array(value, depth+1);
+            break;
+        case json_integer:
+            printf("\tint: %10" PRId64 "\n", value->u.integer);
+            break;
+        case json_double:
+            printf("\tdouble: %f\n", value->u.dbl);
+            break;
+        case json_string:
+            printf("\tstring: %s\n", value->u.string.ptr);
+            break;
+        case json_boolean:
+            printf("\tbool: %d\n", value->u.boolean);
+            break;
+    }
 }
 
 
@@ -184,50 +256,5 @@ static void json_print_object(json_value* value, int depth)
     }
 }
 
-static void json_print_array(json_value* value, int depth)
-{
-    int length, x;
-    if (value == NULL) {
-        return;
-    }
-    length = value->u.array.length;
-    printf("\tarray\n");
-    for (x = 0; x < length; x++) {
-        json_print_value(value->u.array.values[x], depth);
-    }
-}
 
 
-
-void json_print_value(json_value* value, int depth)
-{
-    if (value == NULL) {
-        return;
-    }
-    if (value->type != json_object) {
-        print_depth_shift(depth);
-    }
-    switch (value->type) {
-        case json_none:
-            printf("\tnone\n");
-            break;
-        case json_object:
-            json_print_object(value, depth+1);
-            break;
-        case json_array:
-            json_print_array(value, depth+1);
-            break;
-        case json_integer:
-            printf("\tint: %10" PRId64 "\n", value->u.integer);
-            break;
-        case json_double:
-            printf("\tdouble: %f\n", value->u.dbl);
-            break;
-        case json_string:
-            printf("\tstring: %s\n", value->u.string.ptr);
-            break;
-        case json_boolean:
-            printf("\tbool: %d\n", value->u.boolean);
-            break;
-    }
-}

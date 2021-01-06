@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <mosquitto.h>
 
 #include "device_mqtt.h"

@@ -7,6 +7,7 @@
 #include <time.h>
 
 #include "system_logger.h"
+#include "device_utils.h"
 
 static const char* log_level_strings[] = {"DEBUG", "INFO", "WARN", "ERROR", "FATAL"};
 
@@ -56,6 +57,21 @@ void system_logger(int log_level, char* module, const char* fmt, ...)
                 exit(EXIT_FAILURE);
             break;
         }
+
+        FILE *f;
+
+        f = fopen("multicon_log.csv", "a"); // (append) option will allow appending which is useful in a log file
+        if (f == NULL) 
+        { 
+            printf("%s %7s " ANSI_COLOR_RED     "%5s " ANSI_COLOR_RESET "%s\n",timestamp, "LOGGER", "FATAL", "Unable to store log" );
+        }
+        else
+        {
+            fprintf(f, "%s, %s, %s, %s\n", timestamp, module, log_level_strings[log_level], message_string);
+            fclose(f);
+        } 
+        
+        
     }
     
 }

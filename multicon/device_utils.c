@@ -1,6 +1,37 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <string.h>
+#include <stdarg.h>
+#include <unistd.h>
+#include <time.h>
+#include <assert.h>
+
 #include "device_utils.h"
 
+int util_contains_char(char* str, char char_to_check)
+{
+    if (strchr (str, char_to_check) != NULL)
+        return 1;
+    else
+        return 0;    
+}
 
+char* util_removechar(char* str, char char_to_replace)
+{
+    int i,j;
+    i = 0;
+    while(i<strlen(str))
+    {
+        if (str[i]==char_to_replace)
+        {
+            for (j=i; j<strlen(str); j++)
+                str[j]=str[j+1];
+        }
+        else i++;
+    }
+    return str;
+}
 
 
 char* util_strcpy(char* dest, const char* source, int dest_size)
@@ -21,6 +52,7 @@ char* util_strcpy(char* dest, const char* source, int dest_size)
     }
 }
 
+
 void util_snprintf(char* dest, int destSize, const char *fmt, ...)
 {
     va_list args;
@@ -31,6 +63,54 @@ void util_snprintf(char* dest, int destSize, const char *fmt, ...)
     dest[destSize-1] = '\0';
     va_end(args);
 }
+
+
+
+char** util_strsplit( const char* s, const char* delim ) 
+{
+	return _strsplit( s, delim, NULL );
+}
+
+char** util_strsplit_count( const char* s, const char* delim, size_t* nb ) {
+	return _strsplit( s, delim, nb );
+}
+
+static char** _strsplit( const char* s, const char* delim, size_t* nb ) 
+{
+	void* data;
+	char* _s = ( char* )s;
+	const char** ptrs;
+	size_t
+		ptrsSize,
+		nbWords = 1,
+		sLen = strlen( s ),
+		delimLen = strlen( delim );
+
+	while ( ( _s = strstr( _s, delim ) ) ) {
+		_s += delimLen;
+		++nbWords;
+	}
+	ptrsSize = ( nbWords + 1 ) * sizeof( char* );
+	ptrs =
+	data = malloc( ptrsSize + sLen + 1 );
+	if ( data ) {
+		*ptrs =
+		_s = strcpy( ( ( char* )data ) + ptrsSize, s );
+		if ( nbWords > 1 ) {
+			while ( ( _s = strstr( _s, delim ) ) ) {
+				*_s = '\0';
+				_s += delimLen;
+				*++ptrs = _s;
+			}
+		}
+		*++ptrs = NULL;
+	}
+	if ( nb ) {
+		*nb = data ? nbWords : 0;
+	}
+	return data;
+}
+
 
 
 
@@ -50,26 +130,4 @@ void util_snprintf(char* dest, int destSize, const char *fmt, ...)
 {\"id\": 1, \"method\": \"call\", \"token\": \"chiave-di-autenticazione\", \"params\": [ \"uci\", \"get\", \"wireless.@wifi-iface[0].ssid\"] }
 
 
-
-
-int main(int argc, char** argv)
-{
-  char* file_contents = "{\"id\": 1, \"method\": \"call\", \"token\": \"chiave-di-autenticazione\", \"params\": [ \"uci\", \"get\", \"wireless.@wifi-iface[0].ssid\"] }";
-  json_char* json;
-  json_value* value;
-
-  json = (json_char*)file_contents;
-
-  printf("Start test main for json char\n");
-  
-  value = json_parse(json, strlen(file_contents));
-
-
-  json_parse_command(value);
-
-  json_value_free(value);
-
-
-  return 0;
-}
 */

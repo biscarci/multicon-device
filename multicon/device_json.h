@@ -1,8 +1,7 @@
 #include "json.h"
 
 
-#define MAX_SHELL_OUTPUT_SIZE 5000
-
+#define JSON_COMMAND_LIST_FUNC 0
 
 static int    json_get_integer(json_value* value);
 static double json_get_double(json_value* value);

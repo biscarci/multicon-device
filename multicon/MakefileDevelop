@@ -23,9 +23,27 @@ run:
 	
 	./multicon
 
+compile:
+	gcc -c  -o json.o -c json.c
+	gcc -c  -o system_logger.o -c system_logger.c
+	gcc -c  -o device_utils.o -c device_utils.c
+	gcc -c  -o device_settings.o -c device_settings.c
+	gcc -c  -o device_json.o -c device_json.c
+	gcc -c  -o device_mqtt.o -c device_mqtt.c 
+	gcc -c  -o multicon.o -c multicon.c 
+	gcc -o multicon $(MODULES)
+
 start:
 	./multicon
 
 clean:
 	rm *.o
 	rm multicon
+
+test:
+	valgrind --leak-check=full \
+			--show-leak-kinds=all \
+			--track-origins=yes \
+			--verbose \
+			--log-file=valgrind-out.txt \
+			./multicon
