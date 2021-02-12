@@ -1,9 +1,3 @@
-/* The linked code creates a client that connects to a broker at
- * localhost:1883, subscribes to the topics "tick", "control/#{PID}",
- * and "control/all", and publishes its process ID and uptime (in
- * seconds) on "tock/#{PID}" every time it gets a "tick" message. If the
- * message "halt" is sent to either "control" endpoint, it will
- * disconnect, free its resources, and exit. */
 
 #ifdef DEBUG
 #define LOG(...) do { printf(__VA_ARGS__); } while (0)
@@ -25,6 +19,7 @@
 #define CLIENT_USERNAME "rut955"
 #define CLIENT_PASSWORD "rut955"
 
+#define NUM_OF_LOGGED_PINGS 5 // Mosquitto pings the broker every 60 sec. Prints log every 30min
 
 int device_mqtt_run();
 int device_mqtt_init();

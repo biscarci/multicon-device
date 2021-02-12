@@ -17,3 +17,4 @@ static int min_log_level = 0;
 
 
 void system_logger(int level, char* module, const char* fmt, ...);
+void logger_init();

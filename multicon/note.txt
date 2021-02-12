@@ -20,7 +20,7 @@ Comando per compilare localmente
 
 
 
-biagioscarciello@ubuntu:~/Scrivania/RUT9XX_R_GPL_00.06.07.3$ make package/multicon/compile V=s^C
+biagioscarciello@ubuntu:~/Scrivania/RUT9XX_R_GPL_00.06.07.3$ make package/multicon/compile V=s
 
 
 ~/Scrivania/RUT9XX_R_GPL_00.06.07.3$ ./upgrade.sh 

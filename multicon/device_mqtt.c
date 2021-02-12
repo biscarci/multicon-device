@@ -1,14 +1,18 @@
 #include <stdio.h>
 #include <string.h>
 #include <mosquitto.h>
+#include <time.h>
 
 #include "device_mqtt.h"
 #include "device_json.h"
 #include "device_utils.h"
+#include "device_settings.h"
 #include "system_logger.h"
 
 
-
+char topic_to_publish[200];
+char topic_to_subscribe[200];
+static int ping_log_counter = 0;
 
 bool clean_session = true;
 struct mosquitto *mosq = NULL;
@@ -19,7 +23,7 @@ void mqtt_message_callback(struct mosquitto *mosq, void *userdata, const struct 
 
     if(message->payloadlen)
     {          
-        mosquitto_topic_matches_sub("topic/", message->topic, &match);
+        mosquitto_topic_matches_sub(topic_to_subscribe, message->topic, &match);
         if (match) 
         {
             
@@ -47,7 +51,7 @@ void mqtt_connect_callback(struct mosquitto *mosq, void *userdata, int result)
     if(!result)
     {
         // Subscribe to broker information topics on successful connect. 
-        mosquitto_subscribe(mosq, NULL, "topic/", 2);
+        mosquitto_subscribe(mosq, NULL, topic_to_subscribe, 2);
     }
     else
     {
@@ -70,32 +74,97 @@ void mqtt_subscribe_callback(struct mosquitto *mosq, void *userdata, int mid, in
 void mqtt_log_callback(struct mosquitto *mosq, void *userdata, int level, const char *str)
 {
     // Pring all log messages regardless of level.
-    system_logger(LOGGER_DEBUG,"MQTT", (char*) str);
+    if((ping_log_counter > NUM_OF_LOGGED_PINGS) || (ping_log_counter <= 10))
+    {
+        system_logger(LOGGER_DEBUG,"MQTT", (char*) str);
+        if(ping_log_counter > 10)
+            ping_log_counter = 0;
+    }
+    ping_log_counter++;
 }
+
+
+/* Funzione che ritorna lo stato del device
+    'wireless-ssid':'RUT955_3AF9',
+    'network-apn': 'ho-mobile',
+    'network-signal-level': 'strong',
+    'ip': '192.168.1.1',
+    'zerotier-status': online
+*/
 
 
 int device_mqtt_run()
 {
+    static int counter = 0;
+    int retVal = -1;
+    
+    static long long int t_cycle = 0;
+    static int start_timer = 0;
+    
+    long long int t_curr;
+    
+    t_curr = time(NULL);
 
-    if(mosquitto_connect_async(mosq, BROKER_HOST, BROKER_PORT, KEEPALIVE_SECONDS)){
-        system_logger(LOGGER_ERROR,"MQTT", "Unable to connect");
-        return 1;
-    }
-
-    if(mosquitto_loop_start(mosq) == MOSQ_ERR_SUCCESS)
+    if(!start_timer)
     {
-        system_logger(LOGGER_INFO,"MQTT", "Module connected and ready");
+        t_cycle = t_curr;
+        start_timer = 1;
     }
-    else
+    
+    // Publish a status message every 30 sec
+    if (t_curr - t_cycle >= 60)
     {
-        system_logger(LOGGER_ERROR,"MQTT", "Unable to start module");
-    }
+        #ifdef DEVELOP     
+            char payload[1000] = {""};
+            json_create_json_string(payload, 5, 
+            "wireless-ssid","RUT955_3AF9",
+            "network-apn", "ho-mobile",
+            "network-signal-level", "strong",
+            "ip", "192.168.1.1",
+            "zerotier-status", "online");
+            retVal = mosquitto_publish (mosq, NULL, topic_to_publish, strlen(payload), payload, 0, false); 
+            system_logger(LOGGER_INFO,"MQTT", "Published message on topic %s",topic_to_publish); 
+            
+        #else
+            char mqtt_message[1000] = {""};
+            char timestamp[50]; 
+            util_get_timestamp(timestamp);
 
-    return 0;
+            system_logger(LOGGER_INFO,"MQTT", "Published message on topic %s",topic_to_publish);
+            json_create_json_string(mqtt_message, 38,  
+                "timestamp", timestamp,
+                "serial", deviceSettings.serial,
+                "firmware", deviceSettings.firmware,
+                "lan_ip", deviceSettings.lan_ip,
+                "lan_netmask", deviceSettings.lan_netmask,
+                "lan_proto", deviceSettings.lan_proto,
+                "zerotier_id", deviceSettings.zerotier_id,
+                "zerotier_join", deviceSettings.zerotier_join,
+                "zerotier_vpnenabled", deviceSettings.zerotier_vpnenabled,
+                "ip_addr", deviceSettings.ip_addr,
+                "gsm_rssi_level", deviceSettings.gsm_rssi_level,
+                "wcdma_rscp_level", deviceSettings.wcdma_rscp_level,
+                "wcdma_ecio_level", deviceSettings.wcdma_ecio_level,
+                "lte_rsrp_level", deviceSettings.lte_rsrp_level,
+                "lte_sinr_level", deviceSettings.lte_sinr_level,
+                "connstate", deviceSettings.connstate,
+                "netstate", deviceSettings.netstate,
+                "simstate", deviceSettings.simstate,
+                "sim_iccd", deviceSettings.sim_iccd);
+            retVal = mosquitto_publish (mosq, NULL, topic_to_publish, strlen(mqtt_message), mqtt_message, 0, false); 
+        #endif
+        t_cycle = t_curr;
+    }
+    return retVal;
 }
+
 
 int device_mqtt_init()
 {
+    char serial[SETTINGS_SERIAL_LEN] = {'\0'};
+    get_device_serial(serial);
+    util_snprintf(topic_to_publish, sizeof(topic_to_publish), "multicon/%s",  serial);
+    util_snprintf(topic_to_subscribe, sizeof(topic_to_subscribe), "multicon/commands/%s", serial);
 
     mosquitto_lib_init();
 
@@ -112,6 +181,19 @@ int device_mqtt_init()
     mosquitto_message_callback_set(mosq, mqtt_message_callback);
     mosquitto_subscribe_callback_set(mosq, mqtt_subscribe_callback);
 
+    if(mosquitto_connect_async(mosq, BROKER_HOST, BROKER_PORT, KEEPALIVE_SECONDS)){
+        system_logger(LOGGER_ERROR,"MQTT", "Unable to connect");
+        return 1;
+    }
+
+    if(mosquitto_loop_start(mosq) == MOSQ_ERR_SUCCESS)
+    {
+        system_logger(LOGGER_INFO,"MQTT", "Module connected and ready");
+    }
+    else
+    {
+        system_logger(LOGGER_ERROR,"MQTT", "Unable to start module");
+    }
     return 0;
 }
 

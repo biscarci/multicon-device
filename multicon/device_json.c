@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdarg.h>
 
 #include "device_json.h"
 #include "device_utils.h"
@@ -258,3 +259,34 @@ static void json_print_object(json_value* value, int depth)
 
 
 
+void json_create_json_string(char* dest, int num_args, ...) 
+{
+  va_list ap;
+  int i;
+  va_start(ap, num_args);
+  
+  strcat(dest,"{\n");
+
+  for(i = 0; i < num_args; i++) 
+  {
+    if((i%2)==0)
+    {
+      strcat(dest,"\"");
+      strcat(dest,va_arg(ap, char*));
+      strcat(dest,"\"");
+      strcat(dest,":");
+    }
+    else
+    {
+      strcat(dest,"\"");
+      strcat(dest,va_arg(ap, char*));
+      strcat(dest,"\"");
+      if(i!=num_args-1)
+        strcat(dest,",\n");
+      else
+        strcat(dest,"\n");
+    }
+  }
+  va_end(ap);
+  strcat(dest,"}");
+}

@@ -9,6 +9,16 @@
 
 #include "device_utils.h"
 
+void util_get_timestamp(char* timestamp)
+{
+    time_t ts;
+    struct tm* ts_info;
+
+    ts = time(NULL);
+    ts_info = localtime(&ts);
+    strftime(timestamp, 26, "%Y-%m-%d %H:%M:%S", ts_info);
+}
+
 int util_contains_char(char* str, char char_to_check)
 {
     if (strchr (str, char_to_check) != NULL)
@@ -33,8 +43,7 @@ char* util_removechar(char* str, char char_to_replace)
     return str;
 }
 
-
-char* util_strcpy(char* dest, const char* source, int dest_size)
+void util_strcpy(char* dest, const char* source, int dest_size)
 {
     int i ;
 
@@ -52,7 +61,6 @@ char* util_strcpy(char* dest, const char* source, int dest_size)
     }
 }
 
-
 void util_snprintf(char* dest, int destSize, const char *fmt, ...)
 {
     va_list args;
@@ -63,8 +71,6 @@ void util_snprintf(char* dest, int destSize, const char *fmt, ...)
     dest[destSize-1] = '\0';
     va_end(args);
 }
-
-
 
 char** util_strsplit( const char* s, const char* delim ) 
 {
@@ -110,8 +116,6 @@ static char** _strsplit( const char* s, const char* delim, size_t* nb )
 	}
 	return data;
 }
-
-
 
 
 /* Esempio di Json inviato dal server ed interpolato dal multicon sulla falsa riga 

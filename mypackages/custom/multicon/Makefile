@@ -43,9 +43,9 @@ endef
 
 
 MODULES = $(PKG_BUILD_DIR)/multicon.o \
-		$(PKG_BUILD_DIR)/device_settings.o \
-		$(PKG_BUILD_DIR)/device_mqtt.o \
-		$(PKG_BUILD_DIR)/device_json.o \
+		$(PKG_BUILD_DIR)/device_settings.o\
+		$(PKG_BUILD_DIR)/device_mqtt.o\
+		$(PKG_BUILD_DIR)/device_json.o\
 		$(PKG_BUILD_DIR)/device_utils.o \
 		$(PKG_BUILD_DIR)/system_logger.o \
 		$(PKG_BUILD_DIR)/json.o -lm -lmosquitto
@@ -57,8 +57,8 @@ define Build/Compile
 		$(TARGET_CC) $(TARGET_CFLAGS)  -o $(PKG_BUILD_DIR)/system_logger.o -c $(PKG_BUILD_DIR)/system_logger.c
 		$(TARGET_CC) $(TARGET_CFLAGS)  -o $(PKG_BUILD_DIR)/device_json.o -c $(PKG_BUILD_DIR)/device_json.c
 		$(TARGET_CC) $(TARGET_CFLAGS)  -o $(PKG_BUILD_DIR)/device_settings.o -c $(PKG_BUILD_DIR)/device_settings.c
-		$(TARGET_CC) $(TARGET_CFLAGS)  -o $(PKG_BUILD_DIR)/device_mqtt.o -c $(PKG_BUILD_DIR)/device_mqtt.c 
-		$(TARGET_CC) $(TARGET_CFLAGS)  -o $(PKG_BUILD_DIR)/multicon.o -c $(PKG_BUILD_DIR)/multicon.c 
+		$(TARGET_CC) $(TARGET_CFLAGS)  -o $(PKG_BUILD_DIR)/device_mqtt.o -c $(PKG_BUILD_DIR)/device_mqtt.c
+		$(TARGET_CC) $(TARGET_CFLAGS)  -o $(PKG_BUILD_DIR)/multicon.o -c $(PKG_BUILD_DIR)/multicon.c
 		$(TARGET_CC) $(TARGET_LDFLAGS) -o $(PKG_BUILD_DIR)/$1 $(MODULES)
 endef
 

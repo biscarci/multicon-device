@@ -2,24 +2,31 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <string.h>
+#include <time.h>
 
 #include "device_settings.h"
 #include "device_utils.h"
 #include "system_logger.h"
 
+t_device_settings_status deviceSettings;
 
 
+/**
+ * Funzione che viene chiamata per eseguire un comando a shell che può essere uci o una classica chiamata
+ */
 void device_settings_execute_commands(char* commands, int command_method)
 {
     int exec_status = COMMAND_NOT_EXECUTED;
-
+    char shell_output[MAX_SHELL_OUTPUT_LEN];
+    
     if( command_method == COMMAND_METHOD_UCI)
     {
-        exec_status = exec_uci_commands(commands);
+        exec_status = uci_commands_validator(commands);
     }
     else if( command_method == COMMAND_METHOD_CALL)
     {
-        exec_status = exec_call_commands(commands);
+        exec_status = exec_shell(commands, shell_output);
+        system_logger(LOGGER_DEBUG, "SYSTEM", "Shell command %s output: %s", commands, shell_output);
     }
     else
     {
@@ -49,21 +56,19 @@ void device_settings_execute_commands(char* commands, int command_method)
     }
 }
 
-static int exec_uci_commands(char* uci_command)
+
+static int uci_commands_validator(char* uci_command)
 {
     int uci_operation;
     int exec_status = COMMAND_NOT_EXECUTED;
     char** params_command_array;
     
-
     // Split della stringa dei comandi
     params_command_array = util_strsplit(uci_command, " ");
    
     // Se lo split va a buon fine, effettuo il controllo della sintassi prima di eseguire il comando
     if (params_command_array)
     {
-        int i;
-
         // Controllo se il comando uci è stato specificato correttamente
         if(strcmp( params_command_array[0], "uci") != 0)
         {
@@ -80,34 +85,13 @@ static int exec_uci_commands(char* uci_command)
             exec_status = COMMAND_EXEC_ABORT;
         }
 
+        // Se il processo di validazione è superato, eseguo il comando uci
         if(exec_status != COMMAND_EXEC_ABORT)
         {
-            char *shell_output = NULL;
-
+            char shell_output[MAX_SHELL_OUTPUT_LEN] = {'\0'};
             // Se il controllo della sintassi è andato a buon fine, eseguo il comando
-            shell_output = exec_shell_commands(uci_command);
-
-            // Se la set va a buon fine, l'output della shell è vuoto
-            switch (uci_operation)
-            {
-                case UCI_OP_SET:
-                    exec_status = check_uci_set_command(params_command_array[2], shell_output);
-                    break;
-                
-                case UCI_OP_GET:
-                    exec_status = check_uci_get_command(shell_output);
-                    break;
-                
-                case UCI_OP_ADD:
-                    exec_status = check_uci_add_command(shell_output);
-                    break;
-                
-                case UCI_OP_COMMIT:
-                    exec_status = check_uci_commit_command(shell_output);
-                    break;
-            }
-
-            free(shell_output);
+            exec_status = exec_uci(uci_command, uci_operation, shell_output);
+            system_logger(LOGGER_DEBUG, "SYSTEM", "Uci command %s output: %s", uci_command, shell_output);
         }          
         
         // Pulisco la memoria allocata dinamicamente per la variabile params_command_array
@@ -120,139 +104,61 @@ static int exec_uci_commands(char* uci_command)
     return exec_status;
 }
 
-static int check_uci_commit_command(char *shell_output)
-{
-    if(shell_output == NULL)
-        return COMMAND_EXEC_SUCCESS;
-    else
-        return COMMAND_EXEC_FAILED;
-}
 
-static int check_uci_add_command(char *shell_output)
+/**
+ * Funzione usata per eseguire un qualsiasi uci da shell
+ */
+int exec_uci(char* command, int op, char* shell_output)
 {
-    if(shell_output == NULL)
-        return COMMAND_EXEC_SUCCESS;
-    else
-        return COMMAND_EXEC_FAILED;
-}
+    FILE *fd;
+    char c[MAX_SHELL_COMMAND];
 
-static int check_uci_get_command(char *shell_output)
-{
-    if(shell_output != NULL)
-        return COMMAND_EXEC_SUCCESS;
-    else
-        return COMMAND_EXEC_FAILED;
-}
-
-/* Check dell'operazione di set, 
-effettuo il check sulla sintassi dell'argomento e 
-sull'effettiva modifica della sezione */
-static int check_uci_set_command(char* command_arg, char *shell_output)
-{
-    int result = COMMAND_EXEC_FAILED;
-    int i;
-
-    if(shell_output != NULL)
+    if(op == UCI_OP_GET || op == UCI_OP_SHOW)
     {
-        system_logger(LOGGER_ERROR, "SYSTEM", "Set uci command failed, the operation has been executed but has failed" );
-        system_logger(LOGGER_DEBUG, "SYSTEM", "Set uci command failed, the shell output is: %s", shell_output );
+        util_snprintf(c, sizeof(c), "%s | sed -e \"s/.*=// ; s/['\\\"]//g\"", command);
     }
     else
-    {   
-        char command_check_str[200];
-        char** arguments_array;
-
-        // Splitto gli argomenti del comando rispetto al simbolo '='
-        arguments_array = util_strsplit(command_arg, "=");
-
-        if (arguments_array)
-        {
-            char *shell_output_check = NULL;
-            // Ricostruisco il comando ma questa volta con la get
-            util_snprintf(command_check_str, sizeof(command_check_str), "uci get %s", arguments_array[0] );
-
-            shell_output_check = util_removechar( exec_shell_commands(command_check_str), 10); // In ASCII 10 corrisponde a \n
-            
-            if(shell_output_check)
-            {
-                // Verifico che argomento specificato nella set coincida con quello della get
-                if(strcmp( shell_output_check, util_removechar(arguments_array[1], '\'') ) == 0)
-                {
-                    result = COMMAND_EXEC_SUCCESS;
-                }
-                free(shell_output_check);
-            }
-            else
-            {
-                system_logger(LOGGER_DEBUG, "SYSTEM", "No output from shell during the check process of set command", shell_output );
-            }            
-        }
-
-        // Pulisco la memoria allocata dinamicamente
-        free(arguments_array);
-        
+    {
+        util_snprintf(c, sizeof(c), "%s", command);
     }
-    return result;
+
+    fd = popen(c, "r");
+
+    if(fd == NULL) 
+    {
+        system_logger(LOGGER_WARN,"SYSTEM", "Could not open pipe, the command isn't executed");
+        return COMMAND_EXEC_ABORT;
+    }
+
+    // Read process output
+    fgets(shell_output, MAX_SHELL_OUTPUT_LEN, fd);
+    util_removechar(shell_output, 10); // Rimozione dello \n (In ASCII 10)
+    return COMMAND_EXEC_SUCCESS;
 }
 
-static int exec_call_commands(char* command)
+/**
+ * Funzione usata per eseguire un qualsiasi comando da shell
+ */
+int exec_shell(char* command, char* shell_output)
 {
-    char** params_command_array;
-    int exec_status = COMMAND_EXEC_SUCCESS;
-    // Split della stringa dei comandi
-    params_command_array = util_strsplit(command, " ");
 
-    if (params_command_array)
+    FILE *fd = popen(command, "r");
+
+    if(fd == NULL) 
     {
-        int i;
-
-        // Controllo se il comando uci è stato specificato correttamente
-        if(strcmp( params_command_array[0], "uci") == 0)
-        {
-            system_logger(LOGGER_ERROR, "SYSTEM", "Unauthorized uci command (%s) with call method, the operation will not executed", command);
-            exec_status = COMMAND_EXEC_ABORT;
-        }
-        free(params_command_array);
+        system_logger(LOGGER_WARN,"SYSTEM", "Could not open pipe, the command isn't executed");
+        return COMMAND_EXEC_ABORT;
     }
-
-    exec_shell_commands(command);
-    return exec_status;   
+    // Read process output
+    fgets(shell_output, MAX_SHELL_OUTPUT_LEN, fd);
+    util_removechar(shell_output, 10); // Rimozione dello \n (In ASCII 10)
+    return COMMAND_EXEC_SUCCESS;
 }
 
-static char* exec_shell_commands(char* command)
-{
-    char buf[100];
-    char *temp = NULL;
-    char* output = NULL;
-    unsigned int size = 1;  // start with size of 1 to make room for null terminator
-    unsigned int strlength;
-
-    FILE *ls;
-    if (NULL == (ls = popen(command, "r"))) 
-    {
-        system_logger(LOGGER_FATAL,"SYSTEM", "Error during popen in the commands execution");
-        perror("popen");
-    }
-
-   
-    while (fgets(buf, sizeof(buf), ls) != NULL) 
-    {
-        strlength = strlen(buf);
-        temp = realloc(output, size + strlength);  // allocate room for the buf that gets appended
-        if (temp == NULL) {
-            system_logger(LOGGER_FATAL,"SYSTEM", "Error allocation during popen output creation");
-            return 0;
-        } else {
-            output = temp;
-        }
-        strcpy(output + size - 1, buf);     // append buffer to str
-        size += strlength;  
-    } 
-    
-    pclose(ls);
-    return output;
-}
-
+/**
+ * FunzionUcie che consente di ottenere il 
+ * corrispettivo codificato dell'operazione uci specificata
+ */
 static int get_decoded_uci_operation(char* op)
 {
     if(strcmp( op, "set") == 0)
@@ -267,6 +173,10 @@ static int get_decoded_uci_operation(char* op)
     {
         return UCI_OP_ADD;
     }
+    else if(strcmp( op, "show") == 0)
+    {
+        return UCI_OP_SHOW;
+    }
     else if(strcmp( op, "commit") == 0)
     {
         return UCI_OP_COMMIT;
@@ -275,4 +185,167 @@ static int get_decoded_uci_operation(char* op)
     {
         return UCI_OP_NOTALLOWED;
     }
+}
+
+/**
+ * Ritorna il seriale del device
+ */
+int get_device_serial(char* serial)
+{        
+    int res;
+    #ifdef DEVELOP
+        util_snprintf(serial, sizeof(serial), "%s", "99999999999" );
+        system_logger(LOGGER_WARN, "SYSTEM", "Multicon app is launched in develop-mode assuming serial %s", serial);
+        res = COMMAND_EXEC_SUCCESS;    
+    #else
+        res = exec_uci("uci show hwinfo.hwinfo.serial", UCI_OP_SHOW, serial);
+    #endif
+    
+    return res;
+}
+
+
+int device_settings_refresh_status()
+{
+    // Get device firmware version
+    exec_uci("uci show system.system.device_fw_version ", UCI_OP_SHOW, deviceSettings.firmware);
+
+    // Get device serial
+    exec_uci("uci show hwinfo.hwinfo.serial", UCI_OP_SHOW, deviceSettings.serial);
+
+    // Get network lan ipaddr
+    exec_uci("uci show network.lan.ipaddr", UCI_OP_SHOW, deviceSettings.lan_ip);
+
+    // Get network lan netmask
+    exec_uci("uci show network.lan.netmask", UCI_OP_SHOW, deviceSettings.lan_netmask);
+
+    // Get network lan proto
+    exec_uci("uci show network.lan.proto", UCI_OP_SHOW, deviceSettings.lan_proto);
+
+    // Get zerotier id
+    exec_uci("uci show zerotier.zerotier.address", UCI_OP_SHOW, deviceSettings.zerotier_id);
+
+    // Get zerotier join
+    exec_uci("uci show zerotier.zerotier.join", UCI_OP_SHOW, deviceSettings.zerotier_join);
+
+    // Get zerotier vpn enabled
+    exec_uci("uci show zerotier.zerotier.vpnenabled", UCI_OP_SHOW, deviceSettings.zerotier_vpnenabled);
+
+    // Get ip addr
+    exec_shell("ip addr show zt0 | sed -Ene \'s/^.*inet ([0-9.]+)\\/.*$/\\1/p\'", deviceSettings.ip_addr);
+
+    // To obtain the registration state of the mobile network
+    exec_shell("gsmctl -z", deviceSettings.simstate);
+
+    // To obtain the network connection state
+    exec_shell("gsmctl -j", deviceSettings.connstate); 
+
+    // To obtain the registration state of the mobile network
+    exec_shell("gsmctl -g", deviceSettings.netstate); 
+
+    /** To obtain the router's current signal strength (RSSI) value
+     *  2G and 3G signal levels (dBm)
+     *    >= -70       Excellent  Strong signal with maximum data speeds
+     *    -70 to -85   Good       Strong signal with good data speeds
+     *    -86 to -100  Fair       Fair but useful
+     *    < -100       Poor       Performance will drop drastically
+     *    -110         No signal  Disconnection
+     *  4G signal levels
+     *    > -65        Excellent  Strong signal with maximum data speeds
+     *    -65 to -75   Good       Strong signal with good data speeds
+     *    -75 to -85   Fair       Fair but useful
+     *    -85 to -95   Poor       Performance will drop drastically
+     *    <= -95       No signal  Disconnection 
+     */
+    exec_shell("gsmctl -q", deviceSettings.gsm_rssi_level);
+
+    /** To obtain the router's current WCDMA RSCP level, RSCP Signal strength description:
+     *  -60 to 0    Excellent	Strong signal with maximum data speeds
+     *  -75 to -60  Good	    Strong signal with good data speeds
+     *  -85 to -75  Fair	    Fair but useful, fast and reliable data speeds may be attained
+     *  -95 to -85  Poor	    Marginal data with drop-outs is possible
+     *  -124 to -95 Very poor	Performance will drop drastically, closer to -124 disconnects are likely
+     */
+    exec_shell("gsmctl -X", deviceSettings.wcdma_rscp_level);
+
+    /** To obtain the router's current WCDMA EC/IO level, use -E or --ecio options. EC/IO	Signal quality	Description
+     *  0 to -6    Excellent   Strong signal with maximum data speeds
+     *  -7 to -10  Good        Strong signal with good data speeds
+     *  -11 to -20 Fair        to poor Reliable data speeds may be attained
+     */
+    exec_shell("gsmctl -E", deviceSettings.wcdma_ecio_level);
+
+    /** To obtain the router's current LTE RSRP level, RSRP Signal strength description (dBm)
+     *  >= -80      Excellent	Strong signal with maximum data speeds
+     *  -80 to -90  Good	    Strong signal with good data speeds
+     *  -90 to -100	Fair        to poor	Reliable data speeds may be attained
+     *  <= -100     No signal	Disnonnection
+     */
+    exec_shell("gsmctl -W", deviceSettings.lte_rsrp_level);
+
+    /** To obtain the router's current SINR level, SINR Signal strength description (dB)
+     *  >= 20       Excellent    Strong signal with maximum data speeds
+     *  13 to 20    Good         Strong signal with good data speeds
+     *  0 to 13     Fair         to poor Reliable data speeds may be attained
+     *  <= 0        No           signal Disconnection
+     */
+    exec_shell("gsmctl -Z", deviceSettings.lte_sinr_level);
+
+    // To obtain SIM ICCD
+    exec_shell("gsmctl -J", deviceSettings.sim_iccd);
+
+}
+
+
+void device_settings_print_status_struct()
+{
+    printf("--------------------------------------------------------\n");
+    printf("              serial: %s\n", deviceSettings.serial);
+    printf("            firmware: %s\n", deviceSettings.firmware);
+    printf("              lan_ip: %s\n", deviceSettings.lan_ip);
+    printf("         lan_netmask: %s\n", deviceSettings.lan_netmask);
+    printf("           lan_proto: %s\n", deviceSettings.lan_proto);
+    printf("         zerotier_id: %s\n", deviceSettings.zerotier_id);
+    printf("       zerotier_join: %s\n", deviceSettings.zerotier_join);
+    printf(" zerotier_vpnenabled: %s\n", deviceSettings.zerotier_vpnenabled);
+    printf("             ip_addr: %s\n", deviceSettings.ip_addr);
+    printf("      gsm_rssi_level: %s\n", deviceSettings.gsm_rssi_level);
+    printf("    wcdma_rscp_level: %s\n", deviceSettings.wcdma_rscp_level);
+    printf("    wcdma_ecio_level: %s\n", deviceSettings.wcdma_ecio_level);
+    printf("      lte_rsrp_level: %s\n", deviceSettings.lte_rsrp_level);
+    printf("      lte_sinr_level: %s\n", deviceSettings.lte_sinr_level);
+    printf("           connstate: %s\n", deviceSettings.connstate);
+    printf("            netstate: %s\n", deviceSettings.netstate);
+    printf("            simstate: %s\n", deviceSettings.simstate);
+    printf("            sim_iccd: %s\n", deviceSettings.sim_iccd);
+    printf("--------------------------------------------------------\n");
+}
+
+
+void device_settings_run()
+{
+    static long long int t_cycle = 0;
+    
+    long long int t_curr;
+    
+    t_curr = time(NULL);
+
+    if (t_curr - t_cycle >= DEVICE_SETTINGS_REFRESH_STATUS_RATE)
+    {
+        #ifdef DEVELOP 
+            system_logger(LOGGER_WARN, "SYSTEM", "Multicon app is launched in develop-mode refresh status");
+        #else
+            device_settings_refresh_status();
+        #endif
+        t_cycle = t_curr;
+    }
+}
+
+void device_settings_init()
+{
+    #ifdef DEVELOP 
+        system_logger(LOGGER_WARN, "SYSTEM", "Multicon app is launched in develop-mode refresh status");
+    #else
+        device_settings_refresh_status();
+    #endif
 }

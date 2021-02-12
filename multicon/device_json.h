@@ -1,7 +1,7 @@
 #include "json.h"
 
 
-#define JSON_COMMAND_LIST_FUNC 0
+#define JSON_COMMAND_LIST_FUNC 1
 
 static int    json_get_integer(json_value* value);
 static double json_get_double(json_value* value);
@@ -19,3 +19,4 @@ static void json_print_array(json_value* value, int depth);
 
 
 void json_handle_message(json_value* value);
+void json_create_json_string(char* dest, int num_args, ...);
