@@ -8,6 +8,8 @@ MODULES = multicon.o \
 	device_utils.o \
 	device_json.o \
 	system_logger.o \
+	dyad.o \
+	http_server.o \
 	json.o -lm -lmosquitto
 
 
@@ -19,6 +21,8 @@ run:
 	gcc -c  -o device_settings.o -c device_settings.c -DDEVELOP
 	gcc -c  -o device_json.o -c device_json.c 
 	gcc -c  -o device_mqtt.o -c device_mqtt.c -DDEVELOP
+	gcc -c  -o dyad.o -c dyad.c 
+	gcc -c  -o http_server.o -c http_server.c 
 	gcc -c  -o multicon.o -c multicon.c 
 	gcc -o multicon $(MODULES)
 	./multicon
@@ -30,6 +34,8 @@ compile:
 	gcc -c  -o device_settings.o -c device_settings.c -DDEVELOP
 	gcc -c  -o device_json.o -c device_json.c
 	gcc -c  -o device_mqtt.o -c device_mqtt.c -DDEVELOP
+	gcc -c  -o http_server.o -c http_server.c 
+	gcc -c  -o dyad.o -c dyad.c 
 	gcc -c  -o multicon.o -c multicon.c 
 	gcc -o multicon $(MODULES) 
 

@@ -59,6 +59,7 @@ int exec_uci(char* command, int op, char* shell_output);
 // Utils
 static int get_decoded_uci_operation(char* op);
 
+static int check_zerotier_process_status();
 // Public method
 void device_settings_run();
 void device_settings_init();

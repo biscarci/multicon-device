@@ -114,23 +114,22 @@ int device_mqtt_run()
     // Publish a status message every 30 sec
     if (t_curr - t_cycle >= 60)
     {
+        char mqtt_message[1000] = {""};
+        char timestamp[50]; 
+        util_get_timestamp(timestamp);
+
         #ifdef DEVELOP     
-            char payload[1000] = {""};
-            json_create_json_string(payload, 5, 
-            "wireless-ssid","RUT955_3AF9",
-            "network-apn", "ho-mobile",
+            json_create_json_string(mqtt_message, 10, 
+            "wireless-ssid","Ubuntu-VM",
+            "network-apn", "Vodafone",
             "network-signal-level", "strong",
             "ip", "192.168.1.1",
             "zerotier-status", "online");
-            retVal = mosquitto_publish (mosq, NULL, topic_to_publish, strlen(payload), payload, 0, false); 
-            system_logger(LOGGER_INFO,"MQTT", "Published message on topic %s",topic_to_publish); 
+            retVal = mosquitto_publish (mosq, NULL, topic_to_publish, strlen(mqtt_message), mqtt_message, 0, false); 
+            system_logger(LOGGER_INFO,"MQTT", "Published message on topic %s", topic_to_publish); 
             
         #else
-            char mqtt_message[1000] = {""};
-            char timestamp[50]; 
-            util_get_timestamp(timestamp);
-
-            system_logger(LOGGER_INFO,"MQTT", "Published message on topic %s",topic_to_publish);
+            
             json_create_json_string(mqtt_message, 38,  
                 "timestamp", timestamp,
                 "serial", deviceSettings.serial,
@@ -152,6 +151,7 @@ int device_mqtt_run()
                 "simstate", deviceSettings.simstate,
                 "sim_iccd", deviceSettings.sim_iccd);
             retVal = mosquitto_publish (mosq, NULL, topic_to_publish, strlen(mqtt_message), mqtt_message, 0, false); 
+            system_logger(LOGGER_INFO,"MQTT", "Published message on topic %s", topic_to_publish);
         #endif
         t_cycle = t_curr;
     }

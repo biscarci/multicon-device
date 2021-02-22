@@ -13,6 +13,7 @@
 #include "device_mqtt.h"
 #include "device_utils.h"
 #include "system_logger.h"
+#include "http_server.h"
 
 #define VERSION "1.0.0"
 
@@ -86,6 +87,7 @@ int multicon_init(void)
 
     device_mqtt_init();
     device_settings_init();
+    http_server_init();
     //logger_init();
     init = 1;
   }
@@ -102,15 +104,16 @@ void multicon_run(void)
 
   for (;;)
   { 
-    //struct timeval stop, start;
-    //gettimeofday(&start, NULL);
+    /* struct timeval stop, start;
+    gettimeofday(&start, NULL); */
 
-    device_mqtt_run();
     device_settings_run();
+    device_mqtt_run();
+    http_server_run();
     usleep(500);
     
-    //gettimeofday(&stop, NULL);
-    //printf("took %lu us\n", (stop.tv_sec - start.tv_sec) * 1000000 + stop.tv_usec - start.tv_usec); 
+    /* gettimeofday(&stop, NULL);
+    printf("took %lu us\n", (stop.tv_sec - start.tv_sec) * 1000000 + stop.tv_usec - start.tv_usec);  */
   } 
 }
 

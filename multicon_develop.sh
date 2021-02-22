@@ -26,13 +26,15 @@ upgrade_device_1()
         rm multicon*
 EOF
     echo "[MULTICON-UPDATER] Copyng new package..."
-    cd bin/ar71xx/packages/
-    sshpass -p Maradona10 scp -P 2222 multicon_1.0-1_ar71xx.ipk root@10.147.18.225:/root 
+    sshpass -p Maradona10 scp -P 2222 bin/ar71xx/packages/multicon_1.0-1_ar71xx.ipk root@10.147.18.225:/root 
     echo "[MULTICON-UPDATER] Uninstall old package and install new package:"
     sshpass -p Maradona10 ssh -q -p 2222 root@10.147.18.225 << EOF
-        opkg remove multicon; 
-        opkg install multicon_1.0-1_ar71xx.ipk
+    opkg remove multicon; 
+    opkg install multicon_1.0-1_ar71xx.ipk
 EOF
+    echo "[MULTICON-UPDATER] Set app starting on boot..."
+    sshpass -p Maradona10 scp -P 2222 multicon_utils/multicon root@10.147.18.225:/etc/init.d 
+
 }
 
 case "$1" in
@@ -50,4 +52,7 @@ case "$1" in
     cd multicon/
     make -f MakefileDevelop run
     ;;
+    'clean-workspace')
+    cd multicon/
+    make -f MakefileDevelop clean
 esac

@@ -17,23 +17,23 @@ void print_log_console(int log_level, char* timestamp, char* module, char* messa
     switch(log_level)
     {
         case LOGGER_ERROR:
-            printf("%s %7s " ANSI_COLOR_RED     "%5s " ANSI_COLOR_RESET "%s\n", timestamp, module, log_level_strings[log_level], message_string);
+            printf("%s %7s " ANSI_COLOR_RED     "%6s " ANSI_COLOR_RESET "%s\n", timestamp, module, log_level_strings[log_level], message_string);
         break;
 
         case LOGGER_WARN:
-            printf("%s %7s " ANSI_COLOR_YELLOW  "%5s "  ANSI_COLOR_RESET "%s\n", timestamp, module, log_level_strings[log_level], message_string);
+            printf("%s %7s " ANSI_COLOR_YELLOW  "%6s "  ANSI_COLOR_RESET "%s\n", timestamp, module, log_level_strings[log_level], message_string);
         break;
 
         case LOGGER_INFO:
-            printf("%s %7s " ANSI_COLOR_GREEN   "%5s "  ANSI_COLOR_RESET "%s\n", timestamp, module, log_level_strings[log_level], message_string);
+            printf("%s %7s " ANSI_COLOR_GREEN   "%6s "  ANSI_COLOR_RESET "%s\n", timestamp, module, log_level_strings[log_level], message_string);
         break;
 
         case LOGGER_DEBUG:
-            printf("%s %7s " ANSI_COLOR_BLUE    "%5s " ANSI_COLOR_RESET "%s\n", timestamp, module, log_level_strings[log_level], message_string);
+            printf("%s %7s " ANSI_COLOR_BLUE    "%6s " ANSI_COLOR_RESET "%s\n", timestamp, module, log_level_strings[log_level], message_string);
         break;
 
         case LOGGER_FATAL:
-            printf("%s %7s " ANSI_COLOR_MAGENTA "%5s " ANSI_COLOR_RESET "%s\n", timestamp, module, log_level_strings[log_level], message_string);
+            printf("%s %7s " ANSI_COLOR_MAGENTA "%6s " ANSI_COLOR_RESET "%s\n", timestamp, module, log_level_strings[log_level], message_string);
             exit(EXIT_FAILURE);
         break;
     }
@@ -105,7 +105,7 @@ void system_logger(int log_level, char* module, const char* fmt, ...)
         }
         else
         {
-            fprintf(f, "%s, %s, %s, %s\n", timestamp, module, log_level_strings[log_level], message_string);
+            fprintf(f, "%s; %s; %s; %s\n", timestamp, module, log_level_strings[log_level], message_string);
             fclose(f);
         } 
     }

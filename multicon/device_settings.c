@@ -204,6 +204,16 @@ int get_device_serial(char* serial)
     return res;
 }
 
+static int check_zerotier_process_status()
+{
+    char output[50] = {'\0'};
+    exec_shell("zerotier-cli info | cut -c 21-27", output);
+    if(strcmp(output, "OFFLINE") !=0)
+    {
+        system_logger(LOGGER_WARN, "SYSTEM", "Zerotier app is offline, now it will be restarted");
+        exec_shell("/etc/init.d/zerotier restart", output);
+    }
+}
 
 int device_settings_refresh_status()
 {
@@ -331,12 +341,15 @@ void device_settings_run()
     t_curr = time(NULL);
 
     if (t_curr - t_cycle >= DEVICE_SETTINGS_REFRESH_STATUS_RATE)
-    {
+    {   
         #ifdef DEVELOP 
-            system_logger(LOGGER_WARN, "SYSTEM", "Multicon app is launched in develop-mode refresh status");
+            ;//device_settings_print_status_struct();
         #else
             device_settings_refresh_status();
+            check_zerotier_process_status();
+            //device_settings_print_status_struct();
         #endif
+        
         t_cycle = t_curr;
     }
 }
@@ -344,7 +357,25 @@ void device_settings_run()
 void device_settings_init()
 {
     #ifdef DEVELOP 
-        system_logger(LOGGER_WARN, "SYSTEM", "Multicon app is launched in develop-mode refresh status");
+        system_logger(LOGGER_WARN, "SYSTEM", "Multicon started in develop-mode the device setting status is in test-mode");
+        util_snprintf(deviceSettings.serial, sizeof(deviceSettings.serial), "%s", "1108785374");
+        util_snprintf(deviceSettings.firmware, sizeof(deviceSettings.firmware), "%s", "RUT9XX_R_GPL_00.06.07.5");
+        util_snprintf(deviceSettings.lan_ip, sizeof(deviceSettings.lan_ip), "%s", "192.168.8.1");
+        util_snprintf(deviceSettings.lan_netmask, sizeof(deviceSettings.lan_netmask), "%s", "255.255.255.0");
+        util_snprintf(deviceSettings.lan_proto, sizeof(deviceSettings.lan_proto), "%s", "static");
+        util_snprintf(deviceSettings.zerotier_id, sizeof(deviceSettings.zerotier_id), "%s", "e0ba504a4e");
+        util_snprintf(deviceSettings.zerotier_join, sizeof(deviceSettings.zerotier_join), "%s", "159924d6307a290e");
+        util_snprintf(deviceSettings.zerotier_vpnenabled, sizeof(deviceSettings.zerotier_vpnenabled), "%s", "1");
+        util_snprintf(deviceSettings.ip_addr, sizeof(deviceSettings.ip_addr), "%s", "10.147.18.225");
+        util_snprintf(deviceSettings.gsm_rssi_level, sizeof(deviceSettings.gsm_rssi_level), "%s", "-73");
+        util_snprintf(deviceSettings.wcdma_rscp_level, sizeof(deviceSettings.wcdma_rscp_level), "%s", "service mode not supported");
+        util_snprintf(deviceSettings.wcdma_ecio_level, sizeof(deviceSettings.wcdma_ecio_level), "%s", "service mode not supported");
+        util_snprintf(deviceSettings.lte_rsrp_level, sizeof(deviceSettings.lte_rsrp_level), "%s", "-110");
+        util_snprintf(deviceSettings.lte_sinr_level, sizeof(deviceSettings.lte_sinr_level), "%s", "-1.1");
+        util_snprintf(deviceSettings.connstate, sizeof(deviceSettings.connstate), "%s", "connected");
+        util_snprintf(deviceSettings.netstate, sizeof(deviceSettings.netstate), "%s", "registered (home)");
+        util_snprintf(deviceSettings.simstate, sizeof(deviceSettings.simstate), "%s", "inserted");
+        util_snprintf(deviceSettings.sim_iccd, sizeof(deviceSettings.sim_iccd), "%s", "8939109600013842511F");
     #else
         device_settings_refresh_status();
     #endif
