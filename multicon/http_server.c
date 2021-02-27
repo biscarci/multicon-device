@@ -195,19 +195,22 @@ static void handle_log_page(dyad_Event *e)
         "    <p></p>"
         "      <input class='form-control' id='myInput' type='text' placeholder='Search..'>"
         "      <br>"
-        "      <table class='table table-striped'>"
-        "      <thead>"
-        "          <tr>"
-        "          <th>Timestamp</th>"
-        "          <th>Module</th>"
-        "          <th>Level</th>"
-        "          <th>Message</th>"
-        "          </tr>"
-        "      </thead>"
-        "      <tbody>"
-        "      </tbody>"
-        "      </table>"
+        "      <div class='container-fluid'>"
+        "          <table class='table table-striped'>"
+        "          <thead>"
+        "              <tr>"
+        "              <th>Timestamp</th>"
+        "              <th>Module</th>"
+        "              <th>Level</th>"
+        "              <th>Message</th>"
+        "              </tr>"
+        "          </thead>"
+        "          <tbody>"
+        "          </tbody>"
+        "          </table>"
+        "      </div>"
         "  </div>"
+        "<div class='col-sm-1 sidenav'></div>"
         "</div>"
         "<script>"
         "    $(document).ready(function() { "
@@ -235,11 +238,10 @@ static void handle_log_page(dyad_Event *e)
         "            });"
         "        });"
         "        function processData(allText) {"
-        "         console.log(allText); "
         "            var allTextLines = allText.split(/\\r\\n|\\n/);"
         "            var lines = [];"
-        "            for (var i=1; i<allTextLines.length-1; i++) {"
-        "                var data = allTextLines[i].split(';');"
+        "            for (var i=allTextLines.length-2; i>0; i--) {"
+        "                var data = allTextLines[i].split(';'); "
         "                var timestamp = data[0];"
         "                var module = data[1];"
         "                var level = data[2].replace(' ','');"
@@ -421,7 +423,7 @@ static void onLine(dyad_Event *e)
         }
         else 
         {
-            system_logger(LOGGER_ERROR,"WEBSRV", "Requested  invalid path %s", path);
+            system_logger(LOGGER_DEBUG,"WEBSRV", "Requested  invalid path %s", path);
             dyad_writef(e->stream, "bad request '%s'", path);
         }
 

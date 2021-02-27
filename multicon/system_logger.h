@@ -13,7 +13,7 @@
 #define LOGGER_ERROR  3
 #define LOGGER_FATAL  4
 
-static int min_log_level = 1; 
+static int min_log_level = LOGGER_INFO; 
 
 
 void system_logger(int level, char* module, const char* fmt, ...);

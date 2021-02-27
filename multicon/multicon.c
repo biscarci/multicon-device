@@ -15,7 +15,7 @@
 #include "system_logger.h"
 #include "http_server.h"
 
-#define VERSION "1.0.0"
+#define VERSION "1.1.1rc6"
 
 // System functions 
 void handle_user_interrupt(int);
@@ -38,43 +38,39 @@ int main(int argc, char *argv[])
     
     
     signal(SIGINT, handle_user_interrupt);
-
     pid_t cpid;
     int status;
     cpid = fork();
     int started = 0;
     for (;;)
     {
-        switch (cpid)
-        {
-            case -1 : //Fork failure
-                exit(EXIT_FAILURE);
-            break;
+      switch (cpid)
+      {
+        case -1 : //Fork failure
+          exit(EXIT_FAILURE);
+        break;
 
-            case 0 : //Child Process
-                if(!started)
-                {
-                    system_logger(LOGGER_INFO, "PROCMON", "Multicon process monitor is started");
-                    multicon_run();
-                    started = 1;
-                    return 0; //exit child process
-                }
+        case 0 : //Child Process
+          if(!started)
+          {
+              system_logger(LOGGER_INFO, "PROCMON", "Multicon process monitor is started");
+              multicon_run();
+              started = 1;
+              return 0; //exit child process
+          }
+        break;
 
-            break;
-
-            default : //Parent process
-                if (waitpid(-1, &status, WNOHANG) > 0) 
-                {
-                    system_logger(LOGGER_ERROR, "PROCMON", "Multicon process was aborted abnormally, now it will restarted");
-                    cpid = fork();
-                }
-            break;
-        }
-        sleep(20);
+        default : //Parent process
+          if (waitpid(-1, &status, WNOHANG) > 0) 
+          {
+              system_logger(LOGGER_ERROR, "PROCMON", "Multicon process was aborted abnormally, now it will restarted");
+              cpid = fork();
+          }
+        break;
+      }
+      sleep(20);
     }
-
-    return 0;
-
+  return 0;
 }
 
 

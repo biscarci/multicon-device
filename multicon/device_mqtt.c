@@ -151,7 +151,7 @@ int device_mqtt_run()
                 "simstate", deviceSettings.simstate,
                 "sim_iccd", deviceSettings.sim_iccd);
             retVal = mosquitto_publish (mosq, NULL, topic_to_publish, strlen(mqtt_message), mqtt_message, 0, false); 
-            system_logger(LOGGER_INFO,"MQTT", "Published message on topic %s", topic_to_publish);
+            system_logger(LOGGER_DEBUG,"MQTT", "Published message on topic %s", topic_to_publish);
         #endif
         t_cycle = t_curr;
     }

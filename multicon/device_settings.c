@@ -133,6 +133,7 @@ int exec_uci(char* command, int op, char* shell_output)
     // Read process output
     fgets(shell_output, MAX_SHELL_OUTPUT_LEN, fd);
     util_removechar(shell_output, 10); // Rimozione dello \n (In ASCII 10)
+    pclose(fd);
     return COMMAND_EXEC_SUCCESS;
 }
 
@@ -152,6 +153,7 @@ int exec_shell(char* command, char* shell_output)
     // Read process output
     fgets(shell_output, MAX_SHELL_OUTPUT_LEN, fd);
     util_removechar(shell_output, 10); // Rimozione dello \n (In ASCII 10)
+    pclose(fd);
     return COMMAND_EXEC_SUCCESS;
 }
 
@@ -207,10 +209,10 @@ int get_device_serial(char* serial)
 static int check_zerotier_process_status()
 {
     char output[50] = {'\0'};
-    exec_shell("zerotier-cli info | cut -c 21-27", output);
-    if(strcmp(output, "OFFLINE") !=0)
+    exec_shell("zerotier-cli info", output);
+    if(strstr(output, "OFFLINE") !=  NULL)
     {
-        system_logger(LOGGER_WARN, "SYSTEM", "Zerotier app is offline, now it will be restarted");
+        system_logger(LOGGER_WARN, "SYSTEM", "Zerotier app is offline, now it will be restarted (%s)", output);
         exec_shell("/etc/init.d/zerotier restart", output);
     }
 }
