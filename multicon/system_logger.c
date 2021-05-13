@@ -123,4 +123,10 @@ void logger_init()
     {
         system_logger(LOGGER_WARN,"LOGGER", "Deleted file one week old (ret=%d)", ret);
     } */
+    int isRemoved = 0;
+    char remove_logs[500];
+    util_snprintf(remove_logs, sizeof(remove_logs), "rm *.csv");
+    system(remove_logs);
+    system_logger(LOGGER_INFO, "MAIN", "Multicon logs are removed");
 }
+

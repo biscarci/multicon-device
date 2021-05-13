@@ -206,16 +206,6 @@ int get_device_serial(char* serial)
     return res;
 }
 
-static int check_zerotier_process_status()
-{
-    char output[50] = {'\0'};
-    exec_shell("zerotier-cli info", output);
-    if(strstr(output, "OFFLINE") !=  NULL)
-    {
-        system_logger(LOGGER_WARN, "SYSTEM", "Zerotier app is offline, now it will be restarted (%s)", output);
-        exec_shell("/etc/init.d/zerotier restart", output);
-    }
-}
 
 int device_settings_refresh_status()
 {
@@ -233,15 +223,6 @@ int device_settings_refresh_status()
 
     // Get network lan proto
     exec_uci("uci show network.lan.proto", UCI_OP_SHOW, deviceSettings.lan_proto);
-
-    // Get zerotier id
-    exec_uci("uci show zerotier.zerotier.address", UCI_OP_SHOW, deviceSettings.zerotier_id);
-
-    // Get zerotier join
-    exec_uci("uci show zerotier.zerotier.join", UCI_OP_SHOW, deviceSettings.zerotier_join);
-
-    // Get zerotier vpn enabled
-    exec_uci("uci show zerotier.zerotier.vpnenabled", UCI_OP_SHOW, deviceSettings.zerotier_vpnenabled);
 
     // Get ip addr
     exec_shell("ip addr show zt0 | sed -Ene \'s/^.*inet ([0-9.]+)\\/.*$/\\1/p\'", deviceSettings.ip_addr);
@@ -317,9 +298,6 @@ void device_settings_print_status_struct()
     printf("              lan_ip: %s\n", deviceSettings.lan_ip);
     printf("         lan_netmask: %s\n", deviceSettings.lan_netmask);
     printf("           lan_proto: %s\n", deviceSettings.lan_proto);
-    printf("         zerotier_id: %s\n", deviceSettings.zerotier_id);
-    printf("       zerotier_join: %s\n", deviceSettings.zerotier_join);
-    printf(" zerotier_vpnenabled: %s\n", deviceSettings.zerotier_vpnenabled);
     printf("             ip_addr: %s\n", deviceSettings.ip_addr);
     printf("      gsm_rssi_level: %s\n", deviceSettings.gsm_rssi_level);
     printf("    wcdma_rscp_level: %s\n", deviceSettings.wcdma_rscp_level);
@@ -348,7 +326,6 @@ void device_settings_run()
             ;//device_settings_print_status_struct();
         #else
             device_settings_refresh_status();
-            check_zerotier_process_status();
             //device_settings_print_status_struct();
         #endif
         
@@ -360,14 +337,11 @@ void device_settings_init()
 {
     #ifdef DEVELOP 
         system_logger(LOGGER_WARN, "SYSTEM", "Multicon started in develop-mode the device setting status is in test-mode");
-        util_snprintf(deviceSettings.serial, sizeof(deviceSettings.serial), "%s", "1108785374");
+        util_snprintf(deviceSettings.serial, sizeof(deviceSettings.serial), "%s", "999999");
         util_snprintf(deviceSettings.firmware, sizeof(deviceSettings.firmware), "%s", "RUT9XX_R_GPL_00.06.07.5");
         util_snprintf(deviceSettings.lan_ip, sizeof(deviceSettings.lan_ip), "%s", "192.168.8.1");
         util_snprintf(deviceSettings.lan_netmask, sizeof(deviceSettings.lan_netmask), "%s", "255.255.255.0");
         util_snprintf(deviceSettings.lan_proto, sizeof(deviceSettings.lan_proto), "%s", "static");
-        util_snprintf(deviceSettings.zerotier_id, sizeof(deviceSettings.zerotier_id), "%s", "e0ba504a4e");
-        util_snprintf(deviceSettings.zerotier_join, sizeof(deviceSettings.zerotier_join), "%s", "159924d6307a290e");
-        util_snprintf(deviceSettings.zerotier_vpnenabled, sizeof(deviceSettings.zerotier_vpnenabled), "%s", "1");
         util_snprintf(deviceSettings.ip_addr, sizeof(deviceSettings.ip_addr), "%s", "10.147.18.225");
         util_snprintf(deviceSettings.gsm_rssi_level, sizeof(deviceSettings.gsm_rssi_level), "%s", "-73");
         util_snprintf(deviceSettings.wcdma_rscp_level, sizeof(deviceSettings.wcdma_rscp_level), "%s", "service mode not supported");

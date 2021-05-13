@@ -83,16 +83,6 @@ void mqtt_log_callback(struct mosquitto *mosq, void *userdata, int level, const 
     ping_log_counter++;
 }
 
-
-/* Funzione che ritorna lo stato del device
-    'wireless-ssid':'RUT955_3AF9',
-    'network-apn': 'ho-mobile',
-    'network-signal-level': 'strong',
-    'ip': '192.168.1.1',
-    'zerotier-status': online
-*/
-
-
 int device_mqtt_run()
 {
     static int counter = 0;
@@ -111,35 +101,43 @@ int device_mqtt_run()
         start_timer = 1;
     }
     
-    // Publish a status message every 30 sec
-    if (t_curr - t_cycle >= 60)
+    // Publish a status message every x sec
+    if (t_curr - t_cycle >= PUBLISH_TIME_PERIOD)
     {
         char mqtt_message[1000] = {""};
         char timestamp[50]; 
         util_get_timestamp(timestamp);
 
         #ifdef DEVELOP     
-            json_create_json_string(mqtt_message, 10, 
-            "wireless-ssid","Ubuntu-VM",
-            "network-apn", "Vodafone",
-            "network-signal-level", "strong",
-            "ip", "192.168.1.1",
-            "zerotier-status", "online");
-            retVal = mosquitto_publish (mosq, NULL, topic_to_publish, strlen(mqtt_message), mqtt_message, 0, false); 
-            system_logger(LOGGER_INFO,"MQTT", "Published message on topic %s", topic_to_publish); 
-            
-        #else
-            
-            json_create_json_string(mqtt_message, 38,  
+            json_create_json_string(mqtt_message, 32,  
                 "timestamp", timestamp,
                 "serial", deviceSettings.serial,
                 "firmware", deviceSettings.firmware,
                 "lan_ip", deviceSettings.lan_ip,
                 "lan_netmask", deviceSettings.lan_netmask,
                 "lan_proto", deviceSettings.lan_proto,
-                "zerotier_id", deviceSettings.zerotier_id,
-                "zerotier_join", deviceSettings.zerotier_join,
-                "zerotier_vpnenabled", deviceSettings.zerotier_vpnenabled,
+                "ip_addr", deviceSettings.ip_addr,
+                "gsm_rssi_level", deviceSettings.gsm_rssi_level,
+                "wcdma_rscp_level", deviceSettings.wcdma_rscp_level,
+                "wcdma_ecio_level", deviceSettings.wcdma_ecio_level,
+                "lte_rsrp_level", deviceSettings.lte_rsrp_level,
+                "lte_sinr_level", deviceSettings.lte_sinr_level,
+                "connstate", deviceSettings.connstate,
+                "netstate", deviceSettings.netstate,
+                "simstate", deviceSettings.simstate,
+                "sim_iccd", deviceSettings.sim_iccd);
+            retVal = mosquitto_publish (mosq, NULL, topic_to_publish, strlen(mqtt_message), mqtt_message, 0, false); 
+            system_logger(LOGGER_INFO,"MQTT", "Published message on topic %s", topic_to_publish); 
+            
+        #else
+            
+            json_create_json_string(mqtt_message, 32,  
+                "timestamp", timestamp,
+                "serial", deviceSettings.serial,
+                "firmware", deviceSettings.firmware,
+                "lan_ip", deviceSettings.lan_ip,
+                "lan_netmask", deviceSettings.lan_netmask,
+                "lan_proto", deviceSettings.lan_proto,
                 "ip_addr", deviceSettings.ip_addr,
                 "gsm_rssi_level", deviceSettings.gsm_rssi_level,
                 "wcdma_rscp_level", deviceSettings.wcdma_rscp_level,

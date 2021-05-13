@@ -34,9 +34,6 @@ typedef struct
     char lan_ip[SETTINGS_IP_LEN];
     char lan_netmask[SETTINGS_IP_LEN];
     char lan_proto[SETTINGS_PROTO_LEN];
-    char zerotier_id[SETTINGS_IP_LEN];
-    char zerotier_join[SETTINGS_JOIN_LEN];
-    char zerotier_vpnenabled[SETTINGS_VPN_LEN];
     char ip_addr[SETTINGS_IP_LEN];
     char gsm_rssi_level[SETTINGS_GSMCL_SETTINGS];
     char wcdma_rscp_level[SETTINGS_GSMCL_SETTINGS];
@@ -59,7 +56,6 @@ int exec_uci(char* command, int op, char* shell_output);
 // Utils
 static int get_decoded_uci_operation(char* op);
 
-static int check_zerotier_process_status();
 // Public method
 void device_settings_run();
 void device_settings_init();

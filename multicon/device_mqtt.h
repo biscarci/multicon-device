@@ -26,6 +26,7 @@
 
 
 #define NUM_OF_LOGGED_PINGS 5 // Mosquitto pings the broker every 60 sec. Prints log every 30min
+#define PUBLISH_TIME_PERIOD 10
 
 int device_mqtt_run();
 int device_mqtt_init();

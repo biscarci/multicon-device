@@ -35,31 +35,6 @@ char HTML_PAGE_HEAD[] = "<!DOCTYPE html>"
 "</head>"
 "<body>";
 
-/* char HTML_PAGE_NAVBAR[] = "<nav class='navbar navbar-expand-lg navbar-dark bg-dark'>"
-"  <!-- Brand/logo -->"
-"  <a class='navbar-brand' href='/'>"
-"     <div style='display: flex; font-weight: 900;'><div style='color: #007bff;'>MULTI</div><div>CON</div></div>"
-"  </a>"
-"  <!-- Links -->"
-"  <ul class='navbar-nav'>"
-"    <li class='nav-item'>"
-"      <a class='nav-link' href='/log'>LOG</a>"
-"    </li>"
-"    <li class='nav-item'>"
-"      <a class='nav-link' href='/share'>SHARE</a>"
-"    </li>"
-"    <li class='nav-item'>"
-"      <a class='nav-link' href='/settings'>SETTINGS</a>"
-"    </li>"
-"  </ul>"
-"  <script>"
-"    $(document).ready(function() {"
-"      if(window.location.pathname !=\"/\") {"
-"         $('.navbar-nav').find('a[href*=\"'+window.location.pathname+'\"]').parent().addClass('active');"
-"      }"
-"    });"
-"  </script>"
-"</nav>"; */
 
 char HTML_PAGE_NAVBAR[] =
 "<nav class='navbar navbar-expand-lg navbar-dark bg-dark'>"
@@ -131,9 +106,6 @@ static void handle_home_page(dyad_Event *e)
         <tr> <td>Lan Ip</td>              <td>%s</td> </tr>\
         <tr> <td>Lan Netmask</td>         <td>%s</td> </tr>\
         <tr> <td>Lan Proto</td>           <td>%s</td> </tr>\
-        <tr> <td>Zerotier Id</td>         <td>%s</td> </tr>\
-        <tr> <td>Zerotier Join</td>       <td>%s</td> </tr>\
-        <tr> <td>Zerotier Vpn</td>        <td>%s</td> </tr>\
         <tr> <td>Ip Address</td>          <td>%s</td> </tr>\
         <tr> <td>Gsm Rssi Level</td>      <td>%s</td> </tr>\
         <tr> <td>Wcdma Rscp Level</td>    <td>%s</td> </tr>\
@@ -149,9 +121,6 @@ static void handle_home_page(dyad_Event *e)
         deviceSettings.lan_ip,
         deviceSettings.lan_netmask,
         deviceSettings.lan_proto,
-        deviceSettings.zerotier_id,
-        deviceSettings.zerotier_join,
-        deviceSettings.zerotier_vpnenabled,
         deviceSettings.ip_addr,
         deviceSettings.gsm_rssi_level,
         deviceSettings.wcdma_rscp_level,

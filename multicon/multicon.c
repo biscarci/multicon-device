@@ -15,7 +15,7 @@
 #include "system_logger.h"
 #include "http_server.h"
 
-#define VERSION "1.1.1rc6"
+#define VERSION "1.2"
 
 // System functions 
 void handle_user_interrupt(int);
@@ -84,13 +84,16 @@ int multicon_init(void)
     device_mqtt_init();
     device_settings_init();
     http_server_init();
-    //logger_init();
+    logger_init();
     init = 1;
   }
+
+
   system_logger(LOGGER_INFO, "MAIN", "Multicon modules initialized");
 
   return init;
 }
+
 
 void multicon_run(void)
 {
