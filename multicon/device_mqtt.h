@@ -15,11 +15,11 @@
 #define BROKER_HOST "217.160.175.39"
 
 #ifdef DEVELOP     
-    #define CLIENT_ID       "999999"
+    //#define CLIENT_ID       "999999"
     #define CLIENT_USERNAME "ubuntu-vm"
     #define CLIENT_PASSWORD "ubuntu-vm"
 #else
-    #define CLIENT_ID       "787765"
+    //#define CLIENT_ID       "787765"
     #define CLIENT_USERNAME "rut995"
     #define CLIENT_PASSWORD "rut995"
 #endif

@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <dirent.h>
+#include "device_settings.h"
 #include "system_logger.h"
 #include "device_utils.h"
 
@@ -114,19 +115,28 @@ void system_logger(int log_level, char* module, const char* fmt, ...)
 
 void logger_init()
 {
-    /* char cmd[100];
-    // Costruisco comando per la cancellazione dei log vecchi di una settimana
-    util_snprintf(cmd, sizeof(cmd), "find ./ -iname \"multicon_log*\" -mtime +7 -delete");
-    int ret = system(cmd);
+    char shell_output[MAX_SHELL_OUTPUT_LEN] = {'\0'};
+    char init_logs_command[1000] = {'\0'};
     
-    if(ret!=0)
+    // Retrieve path
+    exec_shell("pwd",shell_output);
+
+    // Create command for logs removing
+    util_snprintf(init_logs_command,
+                sizeof(init_logs_command),
+                "find %s -type f -name \"*.csv\" -mtime +1 -print0 -exec rm -f {} +", 
+                shell_output);
+
+    // Init shell output
+    memset(shell_output, 0, sizeof(shell_output));
+
+    // Exec command for the logs remove
+    exec_shell(init_logs_command, shell_output);
+
+    // If something is removed, prints the warn
+    if(strlen(shell_output) > 1)
     {
-        system_logger(LOGGER_WARN,"LOGGER", "Deleted file one week old (ret=%d)", ret);
-    } */
-    int isRemoved = 0;
-    char remove_logs[500];
-    util_snprintf(remove_logs, sizeof(remove_logs), "rm *.csv");
-    system(remove_logs);
-    system_logger(LOGGER_INFO, "MAIN", "Multicon logs are removed");
+        system_logger(LOGGER_WARN, "MAIN", "Older multicon logs are removed");
+    } 
 }
 

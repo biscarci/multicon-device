@@ -15,7 +15,7 @@
 #include "system_logger.h"
 #include "http_server.h"
 
-#define VERSION "1.2"
+#define VERSION "1.3"
 
 // System functions 
 void handle_user_interrupt(int);
@@ -117,6 +117,12 @@ void multicon_run(void)
 }
 
 
+void multicon_stop(void)
+{
+  device_mqtt_stop();
+}
+
+
 void  handle_user_interrupt(int sig)
 {
   char  c;
@@ -127,8 +133,13 @@ void  handle_user_interrupt(int sig)
   exit(0);
   c = getchar();
   if (c == 'y' || c == 'Y')
+  {
+    multicon_stop();
     exit(0);
+  }
   else
+  {
     signal(SIGINT, handle_user_interrupt);
+  }
   getchar(); // Get new line character
 }

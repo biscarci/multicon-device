@@ -11,45 +11,45 @@
 
 
 
-
-static char* json_get_command_params(json_value* value, int *count)
+static int json_get_command_params(json_value* value, char *string_command, int *count)
 {
-    char* str = NULL;             // Pointer to the joined strings
-    size_t total_length = 0;      // Total length of joined strings
-    size_t length = 0;            // Length of a string
-    int i = 0;                    // Loop counter
-
-    // Find total length of joined strings 
+    int i;
+    int string_command_len = 0;
+    int retVal = 1;
     (*count) = value->u.array.length;
-
     for(i = 0 ; i<(*count) ; i++)
     {
-        char* strings = json_get_string(value->u.array.values[i]);
-
-        total_length += strlen(strings);
-    }
-    ++total_length;     // For joined string terminator
-
-    str = (char*)malloc(total_length);  // Allocate memory for joined strings
-    str[0] = '\0';                      //Empty string we can append to
-
-    /* Append all the strings */
-    for(i = 0 ; i<(*count) ; i++)
-    {
-        char* strings = json_get_string(value->u.array.values[i]);
-
-        strcat(str, strings);
-        length = strlen(str);
-
-        // Check if we need to insert space
-        if((str[length-1] != '\n') && ( i!=( (*count)-1) ) )
+        char* json_strings = json_get_string(value->u.array.values[i]);
+        // Checks if received params is too long
+        if(strlen(json_strings) > MAX_COMMAND_STR_LEN)
         {
-            str[length] = ' ';             // Append a space
-            str[length+1] = '\0';          // followed by terminator
+            retVal = 0;
+            break;
+        }
+
+        strcat(string_command, json_strings);
+        string_command_len = strlen(string_command);
+
+        // Checks if parsing had problems
+        if(string_command_len == 0 || string_command_len > MAX_COMMAND_STR_LEN)
+        {
+            retVal = 0;
+            break;
+        }
+        
+        // Check if we need to insert space        
+        if( i==( (*count)-1) )
+        {
+            string_command[string_command_len+1] = '\0';          // followed by terminator
+        }
+        else
+        {
+            string_command[string_command_len] = ' ';             // Append a space
         }
     }
-    return str;
+    return retVal;
 }
+
 
 
 void json_handle_message(json_value* value)
@@ -101,7 +101,9 @@ void json_handle_message(json_value* value)
         {
             // Verifico i parametri per la creazione della stringa da eseguire come comando uci 
             int i;
+            int result = 0;
             int num_of_commands;
+            char command_params[2000] = {'\0'};
             
             json_value* json_params = value->u.object.values[x].value;
             
@@ -112,16 +114,23 @@ void json_handle_message(json_value* value)
                 {
                     // Se ho una lista di comandi, eseguo ciascun comando ricevuto
                     int j;
-                    char* command_params = NULL;
-                    
                     if(JSON_COMMAND_LIST_FUNC)
                     {
+
                         for (j = 0; j < json_params->u.array.length; j++) 
                         {
                             json_value* json_param_array = json_params->u.array.values[j];
-                            command_params = json_get_command_params(json_param_array,  &num_of_commands);
-                            device_settings_execute_commands(command_params, command_method);
-                            free(command_params);
+                            
+                            result = json_get_command_params(json_param_array, command_params, &num_of_commands);
+                            if(result == 1)
+                            {
+                                device_settings_execute_commands(command_params, command_method);
+                            }
+                            else
+                            {
+                                system_logger(LOGGER_ERROR,"JSON", "Command parsing failed");
+                            }
+                            memset(command_params, 0, sizeof(command_params));
                         }
                     }
                     else
@@ -133,10 +142,16 @@ void json_handle_message(json_value* value)
                 else
                 {
                     // Se ho un solo comando, eseguo il comando ricevuto
-                    char* command_params = NULL;
-                    command_params = json_get_command_params(json_params,  &num_of_commands);
-                    device_settings_execute_commands(command_params, command_method);
-                    free(command_params);
+                    result = json_get_command_params(json_params,command_params,  &num_of_commands);
+                    if(result == 1)
+                    {
+                        device_settings_execute_commands(command_params, command_method);
+                    }
+                    else
+                    {
+                        system_logger(LOGGER_ERROR,"JSON", "Command parsing failed");
+                    }
+                    memset(command_params, 0, sizeof(command_params));
                 } 
             }
             else
@@ -256,8 +271,6 @@ static void json_print_object(json_value* value, int depth)
         json_print_value(value->u.object.values[x].value, depth+1);
     }
 }
-
-
 
 void json_create_json_string(char* dest, int num_args, ...) 
 {

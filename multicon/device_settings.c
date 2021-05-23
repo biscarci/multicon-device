@@ -17,7 +17,7 @@ t_device_settings_status deviceSettings;
 void device_settings_execute_commands(char* commands, int command_method)
 {
     int exec_status = COMMAND_NOT_EXECUTED;
-    char shell_output[MAX_SHELL_OUTPUT_LEN];
+    char shell_output[MAX_SHELL_OUTPUT_LEN] = {'\0'};
     
     if( command_method == COMMAND_METHOD_UCI)
     {
@@ -154,6 +154,10 @@ int exec_shell(char* command, char* shell_output)
     fgets(shell_output, MAX_SHELL_OUTPUT_LEN, fd);
     util_removechar(shell_output, 10); // Rimozione dello \n (In ASCII 10)
     pclose(fd);
+    if(strlen(shell_output) == 1)
+    {
+        util_snprintf(shell_output,MAX_SHELL_OUTPUT_LEN, "%s","None");
+    }
     return COMMAND_EXEC_SUCCESS;
 }
 
@@ -225,7 +229,7 @@ int device_settings_refresh_status()
     exec_uci("uci show network.lan.proto", UCI_OP_SHOW, deviceSettings.lan_proto);
 
     // Get ip addr
-    exec_shell("ip addr show zt0 | sed -Ene \'s/^.*inet ([0-9.]+)\\/.*$/\\1/p\'", deviceSettings.ip_addr);
+    //exec_shell("ip addr show zt0 | sed -Ene \'s/^.*inet ([0-9.]+)\\/.*$/\\1/p\'", deviceSettings.ip_addr);
 
     // To obtain the registration state of the mobile network
     exec_shell("gsmctl -z", deviceSettings.simstate);

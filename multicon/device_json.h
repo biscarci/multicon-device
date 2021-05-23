@@ -2,13 +2,13 @@
 
 
 #define JSON_COMMAND_LIST_FUNC 1
+#define MAX_COMMAND_STR_LEN 3000
 
 static int    json_get_integer(json_value* value);
 static double json_get_double(json_value* value);
 static char*  json_get_string(json_value* value);
 static int    json_get_boolean(json_value* value);
-static char*  json_get_command_params(json_value* value, int *count);
-
+static int json_get_command_params(json_value* value, char *string_command, int *count);
 
 // Funzioni per il print del json
 void        json_print_value(json_value* value, int depth);

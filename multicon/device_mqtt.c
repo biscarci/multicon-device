@@ -83,6 +83,11 @@ void mqtt_log_callback(struct mosquitto *mosq, void *userdata, int level, const 
     ping_log_counter++;
 }
 
+void mqtt_disconnect_callback(struct mosquitto *mosq, void *obj, int rc)
+{
+    system_logger(LOGGER_WARN,"MQTT", "Module disconnected");
+}
+
 int device_mqtt_run()
 {
     static int counter = 0;
@@ -166,7 +171,7 @@ int device_mqtt_init()
 
     mosquitto_lib_init();
 
-    mosq = mosquitto_new(CLIENT_ID, clean_session, NULL);
+    mosq = mosquitto_new(serial, clean_session, NULL);
 
     mosquitto_username_pw_set(mosq, CLIENT_USERNAME, CLIENT_PASSWORD);
 
@@ -178,6 +183,7 @@ int device_mqtt_init()
     mosquitto_connect_callback_set(mosq, mqtt_connect_callback);
     mosquitto_message_callback_set(mosq, mqtt_message_callback);
     mosquitto_subscribe_callback_set(mosq, mqtt_subscribe_callback);
+    mosquitto_disconnect_callback_set(mosq, mqtt_disconnect_callback);
 
     if(mosquitto_connect_async(mosq, BROKER_HOST, BROKER_PORT, KEEPALIVE_SECONDS)){
         system_logger(LOGGER_ERROR,"MQTT", "Unable to connect");
