@@ -16,8 +16,8 @@
 
 #ifdef DEVELOP     
     //#define CLIENT_ID       "999999"
-    #define CLIENT_USERNAME "ubuntu-vm"
-    #define CLIENT_PASSWORD "ubuntu-vm"
+    #define CLIENT_USERNAME "pippo"//"ubuntu-vm"
+    #define CLIENT_PASSWORD "franco"//"ubuntu-vm"
 #else
     //#define CLIENT_ID       "787765"
     #define CLIENT_USERNAME "rut995"
@@ -27,6 +27,7 @@
 
 #define NUM_OF_LOGGED_PINGS 5 // Mosquitto pings the broker every 60 sec. Prints log every 30min
 #define PUBLISH_TIME_PERIOD 10
+
 
 int device_mqtt_run();
 int device_mqtt_init();

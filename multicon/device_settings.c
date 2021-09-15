@@ -16,16 +16,17 @@ t_device_settings_status deviceSettings;
  */
 void device_settings_execute_commands(char* commands, int command_method)
 {
-    int exec_status = COMMAND_NOT_EXECUTED;
+    deviceSettings.command_exec_sts = COMMAND_NOT_EXECUTED;
     char shell_output[MAX_SHELL_OUTPUT_LEN] = {'\0'};
+
     
     if( command_method == COMMAND_METHOD_UCI)
     {
-        exec_status = uci_commands_validator(commands);
+        deviceSettings.command_exec_sts = uci_commands_validator(commands);
     }
     else if( command_method == COMMAND_METHOD_CALL)
     {
-        exec_status = exec_shell(commands, shell_output);
+        deviceSettings.command_exec_sts = exec_shell(commands, shell_output);
         system_logger(LOGGER_DEBUG, "SYSTEM", "Shell command %s output: %s", commands, shell_output);
     }
     else
@@ -33,7 +34,7 @@ void device_settings_execute_commands(char* commands, int command_method)
         system_logger(LOGGER_ERROR, "SYSTEM", "Command method unrecognized, (%s) has not been executed", commands);
     }
     
-    switch (exec_status)
+    switch (deviceSettings.command_exec_sts)
     {
         case COMMAND_NOT_EXECUTED:
             system_logger(LOGGER_ERROR, "SYSTEM", "Command \"%s\" has not been executed (error in the method)", commands);
@@ -41,6 +42,7 @@ void device_settings_execute_commands(char* commands, int command_method)
 
         case COMMAND_EXEC_SUCCESS:
             system_logger(LOGGER_INFO, "SYSTEM", "Command (%s) executed correctly", commands);
+            deviceSettings.command_exec_sts = COMMAND_EXECUTED;
             break;
         
         case COMMAND_EXEC_FAILED:
@@ -200,7 +202,7 @@ int get_device_serial(char* serial)
 {        
     int res;
     #ifdef DEVELOP
-        util_snprintf(serial, sizeof(serial), "%s", "99999999999" );
+        util_snprintf(serial, sizeof(serial), "%s", "123456789" );
         system_logger(LOGGER_WARN, "SYSTEM", "Multicon app is launched in develop-mode assuming serial %s", serial);
         res = COMMAND_EXEC_SUCCESS;    
     #else
@@ -291,6 +293,8 @@ int device_settings_refresh_status()
     // To obtain SIM ICCD
     exec_shell("gsmctl -J", deviceSettings.sim_iccd);
 
+    
+
 }
 
 
@@ -312,6 +316,7 @@ void device_settings_print_status_struct()
     printf("            netstate: %s\n", deviceSettings.netstate);
     printf("            simstate: %s\n", deviceSettings.simstate);
     printf("            sim_iccd: %s\n", deviceSettings.sim_iccd);
+    printf("    command_exec_sts: %d\n", deviceSettings.command_exec_sts);
     printf("--------------------------------------------------------\n");
 }
 
@@ -319,6 +324,7 @@ void device_settings_print_status_struct()
 void device_settings_run()
 {
     static long long int t_cycle = 0;
+    static long long int t_reset = 0;
     
     long long int t_curr;
     
@@ -327,7 +333,7 @@ void device_settings_run()
     if (t_curr - t_cycle >= DEVICE_SETTINGS_REFRESH_STATUS_RATE)
     {   
         #ifdef DEVELOP 
-            ;//device_settings_print_status_struct();
+            ;// device_settings_print_status_struct();
         #else
             device_settings_refresh_status();
             //device_settings_print_status_struct();
@@ -335,13 +341,23 @@ void device_settings_run()
         
         t_cycle = t_curr;
     }
+
+    // Reset della variabile command_exec_sts dopo che il comando ricevuto dal server è stato eseguito correttamente
+    if(deviceSettings.command_exec_sts != 0)
+    {
+        if (t_curr - t_reset >= DEVICE_SETTINGS_RESET_CMD_STATUS_FLAG)
+        {
+            deviceSettings.command_exec_sts = 0;
+            t_reset = t_curr;
+        }
+    }
 }
 
 void device_settings_init()
 {
     #ifdef DEVELOP 
         system_logger(LOGGER_WARN, "SYSTEM", "Multicon started in develop-mode the device setting status is in test-mode");
-        util_snprintf(deviceSettings.serial, sizeof(deviceSettings.serial), "%s", "999999");
+        util_snprintf(deviceSettings.serial, sizeof(deviceSettings.serial), "%s", "1234567");
         util_snprintf(deviceSettings.firmware, sizeof(deviceSettings.firmware), "%s", "RUT9XX_R_GPL_00.06.07.5");
         util_snprintf(deviceSettings.lan_ip, sizeof(deviceSettings.lan_ip), "%s", "192.168.8.1");
         util_snprintf(deviceSettings.lan_netmask, sizeof(deviceSettings.lan_netmask), "%s", "255.255.255.0");
@@ -359,4 +375,6 @@ void device_settings_init()
     #else
         device_settings_refresh_status();
     #endif
+
+    deviceSettings.command_exec_sts = 0;
 }

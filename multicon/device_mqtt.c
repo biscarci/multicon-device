@@ -111,10 +111,12 @@ int device_mqtt_run()
     {
         char mqtt_message[1000] = {""};
         char timestamp[50]; 
+        char command_exec_sts_string[10]; 
         util_get_timestamp(timestamp);
-
+        util_snprintf(command_exec_sts_string, 10, "%d", deviceSettings.command_exec_sts);
+        
         #ifdef DEVELOP     
-            json_create_json_string(mqtt_message, 32,  
+            json_create_json_string(mqtt_message, 34,  
                 "timestamp", timestamp,
                 "serial", deviceSettings.serial,
                 "firmware", deviceSettings.firmware,
@@ -130,13 +132,14 @@ int device_mqtt_run()
                 "connstate", deviceSettings.connstate,
                 "netstate", deviceSettings.netstate,
                 "simstate", deviceSettings.simstate,
-                "sim_iccd", deviceSettings.sim_iccd);
+                "sim_iccd", deviceSettings.sim_iccd,
+                "status_command", command_exec_sts_string);
             retVal = mosquitto_publish (mosq, NULL, topic_to_publish, strlen(mqtt_message), mqtt_message, 0, false); 
             system_logger(LOGGER_INFO,"MQTT", "Published message on topic %s", topic_to_publish); 
             
         #else
             
-            json_create_json_string(mqtt_message, 32,  
+            json_create_json_string(mqtt_message, 34,  
                 "timestamp", timestamp,
                 "serial", deviceSettings.serial,
                 "firmware", deviceSettings.firmware,
@@ -152,7 +155,8 @@ int device_mqtt_run()
                 "connstate", deviceSettings.connstate,
                 "netstate", deviceSettings.netstate,
                 "simstate", deviceSettings.simstate,
-                "sim_iccd", deviceSettings.sim_iccd);
+                "sim_iccd", deviceSettings.sim_iccd,
+                "status_command", command_exec_sts_string);
             retVal = mosquitto_publish (mosq, NULL, topic_to_publish, strlen(mqtt_message), mqtt_message, 0, false); 
             system_logger(LOGGER_DEBUG,"MQTT", "Published message on topic %s", topic_to_publish);
         #endif

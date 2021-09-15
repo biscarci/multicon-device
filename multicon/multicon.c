@@ -15,7 +15,7 @@
 #include "system_logger.h"
 #include "http_server.h"
 
-#define VERSION "1.3"
+#define VERSION "1.4_TEST"
 
 // System functions 
 void handle_user_interrupt(int);

@@ -1,7 +1,9 @@
 #define DEVICE_SETTINGS_REFRESH_STATUS_RATE 60
+#define DEVICE_SETTINGS_RESET_CMD_STATUS_FLAG 15
 #define COMMAND_METHOD_UCI 1
 #define COMMAND_METHOD_CALL 2
 
+#define COMMAND_EXECUTED      2
 #define COMMAND_EXEC_SUCCESS  1
 #define COMMAND_EXEC_FAILED   0
 #define COMMAND_EXEC_ABORT   -1
@@ -44,9 +46,13 @@ typedef struct
     char netstate[SETTINGS_GSMCL_SETTINGS];
     char simstate[SETTINGS_GSMCL_SETTINGS];
     char sim_iccd[SETTINGS_GSMCL_SETTINGS];
+    int  command_exec_sts;
 } t_device_settings_status;
 
 extern t_device_settings_status deviceSettings;
+
+
+
 
 // Command execution
 static int uci_commands_validator(char* uci_command);
