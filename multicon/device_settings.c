@@ -37,7 +37,7 @@ void device_settings_execute_commands(char* commands, int command_method)
     switch (deviceSettings.command_exec_sts)
     {
         case COMMAND_NOT_EXECUTED:
-            system_logger(LOGGER_ERROR, "SYSTEM", "Command \"%s\" has not been executed (error in the method)", commands);
+            system_logger(LOGGER_ERROR, "SYSTEM", "Command \"%s\" has not been executed (skipped)", commands);
             break;
 
         case COMMAND_EXEC_SUCCESS:
